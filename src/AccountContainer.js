@@ -9,10 +9,10 @@ function AccountContainer() {
   const [transactions, setTransactions] = useState([]);
 
   //manage state for user serch parameters
-  const [ seaarch, setSearch] = useState("");
-
+  const [ search, setSearch] = useState(""); 
+  
    //Featch all transaction from server
-   useEffect(() => {
+  useEffect(() => {
     fetch("http://localhost:3000/transactions")
       .then((r) => r.json())
       .then((data) => setTransactions(data)) //Setter activity for transaction after server response, this is the data in state when the app first loads
