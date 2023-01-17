@@ -1,38 +1,105 @@
-import React, { useEffect, useState} from "react";
-// import TransactionsList from "./TransactionsList";
-import TransactionsList from "./TransactionList";
-import Search from "./Search";
-import AddTransactionForm from "./AddTransactionForm";
+import React, { useState } from "react";
+import Transaction from "./Transaction";
 
-function AccountContainer() {
-  //store fetched data from side effect
-  const [transactions, setTransactions] = useState([]);
+function TransactionsList({ transactions, setTransactions, search}) {
+  const [sortStrategy] = useState({
+    date: -1,
+    description: -1,
+    category: -1,
+    amount: -1
+  })
+  let transactionList;
 
-  //manage state for user serch parameters
-  const [ seaarch, setSearch] = useState("");
-
-   //Featch all transaction from server
-   useEffect(() => {
-    fetch("http://localhost:3000/transactions")
-      .then((r) => r.json())
-      .then((data) => setTransactions(data)) //Setter activity for transaction after server response, this is the data in state when the app first loads
-  }, [])
-
-  //Re-renders page with updated state after creating a new transaction, use this when trying to re render with updated data
-  function updatedTransactions(newTransactions) {
-   const updatedTransactionsArray = [...transactions, newTransactions]
-   setTransactions(updatedTransactionsArray)
+  if(transactions){
+    const filteredTransactions = transactions.filter(transaction => {
+      return (
+        transaction.description.toLowerCase().includes(search.toLowerCase()) || transaction.category.toLowerCase().includes(search.toLowerCase())
+      )
+    })
+    transactionList = filteredTransactions.map((transaction) => (    
+      <Transaction
+        key={transaction.id}
+        id = {transaction.id}
+        date={transaction.date}
+        description={transaction.description}
+        category={transaction.category}
+        amount={transaction.amount}
+      />
+    ))
+  }
+  function updateSortStrategy(item){
+    sortStrategy[item] = sortStrategy[item] * -1;
   }
 
-  //render all components
+  function sortTransactionList(event){
+    const sortBy  = event.target.textContent.toLowerCase()
+    updateSortStrategy(sortBy)
+
+    let transactionsCopy;
+    
+    if(sortBy === "category" || sortBy === "description"){
+      transactionsCopy = [...transactions].sort((a, b) => {
+        if(a[sortBy].toLowerCase() > b[sortBy].toLowerCase()){
+          return sortStrategy[sortBy]
+        }else if(a[sortBy].toLowerCase() < b[sortBy].toLowerCase()){
+          return sortStrategy[sortBy] * -1
+        }else {
+          return 0
+        }
+      })
+    }else if(sortBy === "amount"){
+      transactionsCopy = [...transactions].sort((a, b) => {
+        if(a.amount > b.amount){
+          return sortStrategy.amount
+        }else if(a.amount < b.amount){
+          return sortStrategy.amount * -1
+        }else {
+          return 0
+        }
+      })  
+    }else if(sortBy === "date"){
+      transactionsCopy = [...transactions].sort((a, b) => {
+        const timeA = (new Date(a.date)).getTime()
+        const timeB = (new Date(b.date)).getTime()
+
+        if(timeA> timeB){
+          return sortStrategy.date
+        }else if(timeA < timeB){
+          return sortStrategy.date * -1
+        }else {
+          return 0
+        }
+      })       
+    }
+
+    setTransactions(transactionsCopy)
+  }
+  
+  
   return (
-    <div>
-      <Search search={search} setSearch={setSearch}/>
-      <AddTransactionForm newData={updatedTransactions} />
-      <TransactionsList transactions={transactions} setTransactions={setTransactions} search={search} />
-    </div>
+    <table className="ui celled striped padded table">
+      <tbody>
+        <tr>
+          <th style={{backgroundColor: "rgba(0, 0, 0, 0.7)", cursor: "pointer"}}>
+            <h3 className="ui center aligned header" onClick={sortTransactionList} title="click to sort by date">Date</h3>
+          </th>
+          <th style={{backgroundColor: "rgba(0, 0, 0, 0.10)", cursor: "pointer"}}>
+            <h3 className="ui center aligned header" onClick={sortTransactionList} title="click to sort by description">Description</h3>
+          </th>
+          <th style={{backgroundColor: "rgba(0, 0, 0, 0.5)", cursor: "pointer"}}>
+            <h3 className="ui center aligned header" onClick={sortTransactionList} title="click to sort by category">Category</h3>
+          </th>
+          <th style={{backgroundColor: "rgba(0, 0, 0, 0.7)", cursor: "pointer"}}>
+            <h3 className="ui center aligned header" onClick={sortTransactionList} title="click to sort by amount">Amount</h3>
+          </th>
+          <th style={{backgroundColor: "rgba(0, 0, 0, 0.5)", cursor: "pointer"}}>
+            <h3 className="ui center aligned header" title="click to sort by amount">Action</h3>
+          </th>
+        </tr>
+        {transactionList}
+      </tbody>
+    </table>
   );
 }
 
-
-export default AccountContainer;
+export default TransactionsList;
