@@ -11,3 +11,11 @@ function validateForm(formData){
         break
       }
     }
+
+    //general state of validity of the form
+    formDetails.isInvalid = formDetails.containsEmptyInput || formDetails.hasInvalidDate || false
+
+    return formDetails;
+  }
+
+export { validateForm };
